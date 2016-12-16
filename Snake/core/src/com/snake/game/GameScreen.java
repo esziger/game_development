@@ -42,6 +42,8 @@ public class GameScreen extends ScreenAdapter {
 
 	private Array<BodyPart> bodyParts = new Array<BodyPart>();
 
+	private int snakeXBeforeUpdate = 0, snakeYBeforeUpdate = 0;
+
 	@Override
 	public void show() {
 		batch = new SpriteBatch();
@@ -70,6 +72,9 @@ public class GameScreen extends ScreenAdapter {
 
 	private void moveSnake(){
 
+		snakeXBeforeUpdate = snakeX;
+		snakeYBeforeUpdate = snakeY;
+
 		switch(snakeDirection) {
 			case RIGHT:{
 				snakeX += SNAKE_MOVEMENT;
@@ -89,6 +94,14 @@ public class GameScreen extends ScreenAdapter {
 			}
 		}
 
+	}
+
+	private void updateBodyPartsPosition(){
+		if(bodyParts.size > 0 ){
+			BodyPart bodyPart = bodyParts.removeIndex(0);
+			bodyPart.updateBodyPosition(snakeXBeforeUpdate, snakeYBeforeUpdate);
+			bodyParts.add(bodyPart);
+		}
 	}
 
 	private void queryInput(){
@@ -131,6 +144,7 @@ public class GameScreen extends ScreenAdapter {
 			timer = MOVE_TIME;
 			moveSnake();
 			checkForOutOfBounds();
+			updateBodyPartsPosition();
 		}
 
 		clearScreen();
@@ -150,6 +164,10 @@ public class GameScreen extends ScreenAdapter {
 	private void draw() {
 		batch.begin();
 		batch.draw(snakeHead, snakeX, snakeY);
+
+		for(BodyPart bodypart : bodyParts){
+			bodypart.draw(batch);
+		}
 
 		if(appleAvailable){
 			batch.draw(apple, appleX, appleY);
