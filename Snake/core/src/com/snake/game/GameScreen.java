@@ -60,6 +60,9 @@ public class GameScreen extends ScreenAdapter {
 	private BitmapFont bitmapFont;
 	private static final String GAME_OVER_TEXT = "Game Over... Tap space to restart!";
 
+	private int score = 0;
+	private static final int POINT_PER_APPLE = 20;
+
 	@Override
 	public void show() {
 		bitmapFont = new BitmapFont();
@@ -202,6 +205,7 @@ public class GameScreen extends ScreenAdapter {
 			bodyPart.updateBodyPosition(snakeX,snakeY);
 			bodyParts.insert(0,bodyPart);
 
+			addToScore();
 			appleAvailable = false;
 		}
 	}
@@ -224,6 +228,7 @@ public class GameScreen extends ScreenAdapter {
 					(Gdx.graphics.getHeight() - layout.height)/2);
 		}
 
+		drawScore();
 		batch.end();
 	}
 
@@ -312,6 +317,20 @@ public class GameScreen extends ScreenAdapter {
 		snakeXBeforeUpdate = 0;
 		snakeYBeforeUpdate = 0;
 		appleAvailable = false;
+		score = 0;
+	}
+
+	private void addToScore(){
+		score += POINT_PER_APPLE;
+	}
+
+	private void drawScore(){
+		if(state == STATE.PLAYING){
+			String scoreAsString = Integer.toString(score);
+			layout.setText(bitmapFont, scoreAsString);
+			bitmapFont.draw(batch, scoreAsString, (Gdx.graphics.getWidth() - layout.width)/2,
+					(Gdx.graphics.getHeight() - layout.height)/2);
+		}
 	}
 
 }
