@@ -6,6 +6,8 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
@@ -48,14 +50,25 @@ public class GameScreen extends ScreenAdapter {
 	private ShapeRenderer shapeRenderer = new ShapeRenderer();
 	private static  final int GRID_CELL = 32;
 
+	private enum STATE{
+		PLAYING, GAME_OVER
+	}
+
+	private STATE state = STATE.PLAYING;
+
+	private GlyphLayout layout = new GlyphLayout();
+	private BitmapFont bitmapFont;
+	private static final String GAME_OVER_TEXT = "Game Over... Tap space to restart!";
+
 	@Override
 	public void show() {
+		bitmapFont = new BitmapFont();
 		shapeRenderer = new ShapeRenderer();
 		batch = new SpriteBatch();
 		snakeHead = new Texture(Gdx.files.internal("snakehead_resized.png"));
 		snakeBody = new Texture(Gdx.files.internal("snakeBody.png"));
 		apple = new Texture(Gdx.files.internal("apple.png"));
-		//snakeHead = new Texture("badlogic.jpg");
+		bitmapFont = new BitmapFont();
 	}
 
 	private void drawGrid(){
@@ -149,33 +162,37 @@ public class GameScreen extends ScreenAdapter {
 	}
 
 	@Override
-    public void render (float delta) {
+    public void render(float delta) {
 
-		queryInput();
-
-		checkAppleCollision();
-		checkAndPlaceApple();
-
-		updateSnake(delta);
+		switch(state){
+			case PLAYING:	{
+				queryInput();
+				updateSnake(delta);
+				checkAppleCollision();
+				checkAndPlaceApple();
+			}
+			break;
+			case GAME_OVER:{
+				checkForRestart();
+			}
+			break;
+		}
 
 		clearScreen();
-		drawGrid();
+		//drawGrid();
 		draw();
     }
 
 
 	private void updateSnake(float delta){
-		if(!hasHit)
-		{
-			timer -= delta;
-			if(timer <= 0){
-				timer = MOVE_TIME;
-				moveSnake();
-				checkForOutOfBounds();
-				updateBodyPartsPosition();
-				checkSnakeBodyCollision();
-				directionSet = false;
-			}
+		timer -= delta;
+		if(timer <= 0){
+			timer = MOVE_TIME;
+			moveSnake();
+			checkForOutOfBounds();
+			updateBodyPartsPosition();
+			checkSnakeBodyCollision();
+			directionSet = false;
 		}
 	}
 
@@ -199,6 +216,12 @@ public class GameScreen extends ScreenAdapter {
 
 		if(appleAvailable){
 			batch.draw(apple, appleX, appleY);
+		}
+
+		if(state == STATE.GAME_OVER){
+			layout.setText(bitmapFont,GAME_OVER_TEXT);
+			bitmapFont.draw(batch, GAME_OVER_TEXT, (Gdx.graphics.getWidth() - layout.width)/2,
+					(Gdx.graphics.getHeight() - layout.height)/2);
 		}
 
 		batch.end();
@@ -238,13 +261,12 @@ public class GameScreen extends ScreenAdapter {
 	}
 
 	private boolean directionSet = false;
-	private boolean hasHit = false;
 
 
 	private void checkSnakeBodyCollision(){
 		for(BodyPart bodyPart : bodyParts){
 			if(bodyPart.x == snakeX && bodyPart.y ==  snakeY)
-				hasHit = true;
+				state = STATE.GAME_OVER;
 		}
 	}
 
@@ -273,4 +295,23 @@ public class GameScreen extends ScreenAdapter {
 			}
 		}
 	}
+
+
+	private void checkForRestart(){
+		if(Gdx.input.isKeyPressed(Input.Keys.SPACE)) doRestart();
+	}
+
+	private void doRestart(){
+		state = STATE.PLAYING;
+		bodyParts.clear();
+		snakeDirection = RIGHT;
+		directionSet = false;
+		timer = MOVE_TIME;
+		snakeX = 0;
+		snakeY = 0;
+		snakeXBeforeUpdate = 0;
+		snakeYBeforeUpdate = 0;
+		appleAvailable = false;
+	}
+
 }
